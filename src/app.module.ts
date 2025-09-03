@@ -6,11 +6,13 @@ import { UsersModule } from './users/users.module';
 import { ProductsModule } from './products/products.module';
 import { CategoriesModule } from './categories/categories.module';
 import { OrdersModule } from './orders/orders.module';
+import { DatabaseService } from './database/service/database.service';
+import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
   imports: [AuthModule, UsersModule, ProductsModule, CategoriesModule, OrdersModule, LoggerModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, DatabaseService],
 })
 export class AppModule {}

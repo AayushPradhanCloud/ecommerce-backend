@@ -1,0 +1,13 @@
+{
+  "schema": "./src/database/schema/*.schema.ts",
+  "out": "./drizzle",
+  "dialect": "mysql",
+  "dbCredentials": {
+    "host": "localhost",
+    "user": "root",
+    "database": "ecommerce_db",
+    "port": 3306
+  },
+  "verbose": true,
+  "strict": true
+}
