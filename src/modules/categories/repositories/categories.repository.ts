@@ -1,16 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
-import { DRIZZLE } from '../../../database/tokens';
 import { categories, type Category } from '../../../database/schema';
+import { DRIZZLE } from '../../../database/tokens';
 import { CreateCategoryDto } from '../dtos/create-category.dto';
 import { UpdateCategoryDto } from '../dtos/update-category.dto';
-
-interface MySqlResult {
-  affectedRows: number;
-  insertId?: number;
-  warningStatus?: number;
-}
 
 @Injectable()
 export class CategoriesRepository {
@@ -33,21 +27,36 @@ export class CategoriesRepository {
     return rows[0] ?? null;
   }
 
-  async create(dto: CreateCategoryDto): Promise<Category> {
-    const [insertedId] = await this.db
-      .insert(categories)
-      .values(dto)
-      .$returningId()
+async create(dto: CreateCategoryDto): Promise<Category> {
+  const data = {
+    name: dto.name,
+    slug: dto.slug,
+    description: dto.description ?? null,
+  };
+
+  const result: any = await this.db.insert(categories).values(data).execute();
+
+  // Try to get inserted ID, fallback to fetching by unique slug
+  const insertId = result.insertId;
+  let category: Category | null = null;
+
+  if (insertId) {
+    category = await this.findById(insertId);
+  } else {
+    // fallback: fetch by slug
+    const rows = await this.db
+      .select()
+      .from(categories)
+      .where(eq(categories.slug, dto.slug))
+      .limit(1)
       .execute();
-
-    if (!insertedId) {
-      throw new Error('Failed to create category');
-    }
-
-    const category = await this.findById(insertedId.id ?? insertedId);
-    if (!category) throw new Error('Failed to fetch created category');
-    return category;
+    category = rows[0] ?? null;
   }
+
+  if (!category) throw new Error('Failed to fetch created category');
+  return category;
+}
+
 
   async update(id: number, dto: UpdateCategoryDto): Promise<Category> {
     const result = await this.db
@@ -56,8 +65,8 @@ export class CategoriesRepository {
       .where(eq(categories.id, id))
       .execute();
 
-    const mysqlResult = result as unknown as MySqlResult;
-    if (mysqlResult.affectedRows === 0) {
+    const affectedRows = (result as any).affectedRows ?? 0;
+    if (affectedRows === 0) {
       throw new Error(`Category with ID ${id} not found`);
     }
 
@@ -75,8 +84,8 @@ export class CategoriesRepository {
       .where(eq(categories.id, id))
       .execute();
 
-    const mysqlResult = result as unknown as MySqlResult;
-    if (mysqlResult.affectedRows === 0) {
+    const affectedRows = (result as any).affectedRows ?? 0;
+    if (affectedRows === 0) {
       throw new Error(`Category with ID ${id} not found`);
     }
 

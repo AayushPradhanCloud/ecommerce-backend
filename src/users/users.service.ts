@@ -1,19 +1,19 @@
 import {
-  Injectable,
   ConflictException,
+  Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { DatabaseService } from '../database/service/database.service';
-import {
-  users,
-  refreshTokens,
-  InsertUser,
-  User,
-  InsertRefreshToken,
-  RefreshToken,
-} from '../database/schema/users.schema';
-import { eq } from 'drizzle-orm';
 import * as argon2 from 'argon2';
+import { eq } from 'drizzle-orm';
+import {
+  InsertRefreshToken,
+  InsertUser,
+  RefreshToken,
+  refreshTokens,
+  User,
+  users,
+} from '../database/schema/users.schema';
+import { DatabaseService } from '../database/service/database.service';
 
 @Injectable()
 export class UsersService {
@@ -139,9 +139,6 @@ export class UsersService {
   tokenHash: string,
 ): Promise<RefreshToken> {
   try {
-    console.log('🔄 Storing refresh token for user ID:', userId);
-    
-    // Verify user exists
     const user = await this.findById(userId);
     if (!user) {
       throw new InternalServerErrorException('User not found');
@@ -160,10 +157,9 @@ export class UsersService {
       throw new InternalServerErrorException('Failed to retrieve stored refresh token');
     }
 
-    console.log('✅ Refresh token stored successfully:', insertedToken);
     return insertedToken;
   } catch (error: unknown) {
-    console.error('❌ Error in storeRefreshToken:');
+    console.error(' Error in storeRefreshToken:');
     
     if (error instanceof Error) {
       console.error('Error message:', error.message);
