@@ -6,6 +6,8 @@ import {
   boolean,
 } from 'drizzle-orm/mysql-core';
 import { sql } from 'drizzle-orm';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { z } from 'zod';
 
 export const users = mysqlTable('users', {
   id: int('id').primaryKey().autoincrement(),
@@ -22,3 +24,22 @@ export const refreshTokens = mysqlTable('refresh_tokens', {
   isRevoked: boolean('is_revoked').default(false).notNull(),
   createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+export const selectUserSchema = createSelectSchema(users).omit({
+  password: true,
+});
+
+export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({
+  id: true,
+  createdAt: true,
+});
+export const selectRefreshTokenSchema = createSelectSchema(refreshTokens);
+
+export type User = z.infer<typeof selectUserSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type RefreshToken = z.infer<typeof selectRefreshTokenSchema>;
+export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;

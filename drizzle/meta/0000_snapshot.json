@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "bd762b72-4976-4447-88c5-a2773deb409a",
+  "id": "1ef7f11a-8d48-4cd1-8b0d-e0e0327e7dd8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "refresh_tokens": {
