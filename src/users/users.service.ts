@@ -27,7 +27,13 @@ export class UsersService {
         .where(eq(users.email, email))
         .limit(1);
 
-      return result[0] || null;
+      if (!result[0]) return null;
+      // Convert createdAt: null to createdAt: undefined for type compatibility
+      const user = {
+        ...result[0],
+        createdAt: result[0].createdAt === null ? undefined : result[0].createdAt,
+      };
+      return user;
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw new InternalServerErrorException(
@@ -46,7 +52,13 @@ export class UsersService {
         .where(eq(users.id, id))
         .limit(1);
 
-      return result[0] || null;
+      if (!result[0]) return null;
+      // Convert createdAt: null to createdAt: undefined for type compatibility
+      const user = {
+        ...result[0],
+        createdAt: result[0].createdAt === null ? undefined : result[0].createdAt,
+      };
+      return user;
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw new InternalServerErrorException(
@@ -59,7 +71,11 @@ export class UsersService {
 
   async findAll(): Promise<User[]> {
     try {
-      return await this.dbService.db.select().from(users);
+      const result = await this.dbService.db.select().from(users);
+      return result.map(user => ({
+        ...user,
+        createdAt: user.createdAt === null ? undefined : user.createdAt,
+      }));
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw new InternalServerErrorException(
@@ -173,7 +189,11 @@ export class UsersService {
         .where(eq(refreshTokens.tokenHash, tokenHash))
         .limit(1);
 
-      return result[0] || null;
+      if (!result[0]) return null;
+      return {
+        ...result[0],
+        createdAt: result[0].createdAt === null ? undefined : result[0].createdAt,
+      };
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw new InternalServerErrorException(
@@ -202,10 +222,14 @@ export class UsersService {
 
   async getRefreshTokens(userId: number): Promise<RefreshToken[]> {
     try {
-      return await this.dbService.db
+      const result = await this.dbService.db
         .select()
         .from(refreshTokens)
         .where(eq(refreshTokens.userId, userId));
+      return result.map(token => ({
+        ...token,
+        createdAt: token.createdAt === null ? undefined : token.createdAt,
+      }));
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw new InternalServerErrorException(
