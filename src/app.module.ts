@@ -11,7 +11,7 @@ import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, ProductsModule, CategoriesModule, OrdersModule, LoggerModule],
+  imports: [AuthModule, UsersModule, ProductsModule, CategoriesModule, OrdersModule, LoggerModule, ConfigModule.forRoot({ isGlobal: true }),],
   controllers: [AppController],
   providers: [AppService, DatabaseService],
 })
