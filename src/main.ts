@@ -1,8 +1,8 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { LoggerService } from './common/logger/logger.service';
-import { ValidationPipe } from '@nestjs/common';
-import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

@@ -1,11 +1,11 @@
-import {
-  mysqlTable,
-  varchar,
-  int,
-  timestamp,
-  boolean,
-} from 'drizzle-orm/mysql-core';
 import { sql } from 'drizzle-orm';
+import {
+  boolean,
+  int,
+  mysqlTable,
+  timestamp,
+  varchar,
+} from 'drizzle-orm/mysql-core';
 import Joi from 'joi';
 
 // ------------------- TABLES -------------------

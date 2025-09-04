@@ -11,16 +11,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { AdminOnly, AdminOrManager } from '../common/decorators/roles.decorators';
+import { Roles } from '../common/guards/roles.guard';
 import { CreateProductCommand } from '../modules/products/commands/create-product.command';
-import { UpdateProductCommand } from '../modules/products/commands/update-product.command';
 import { DeleteProductCommand } from '../modules/products/commands/delete-product.command';
-import { CreateProductDto, createProductSchema } from '../modules/products/dtos/create-product.dto';
-import { UpdateProductDto, updateProductSchema } from '../modules/products/dtos/update-product.dto';
+import { UpdateProductCommand } from '../modules/products/commands/update-product.command';
+import { CreateProductDto } from '../modules/products/dtos/create-product.dto';
+import { UpdateProductDto } from '../modules/products/dtos/update-product.dto';
 import { GetProductByIdQuery } from '../modules/products/queries/get-product-by-id.query';
 import { GetProductsQuery } from '../modules/products/queries/get-products.query';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 
 @UseGuards(RolesGuard)
 @Controller('products')
@@ -28,7 +26,7 @@ export class ProductsController {
   constructor(
     private readonly commands: CommandBus,
     private readonly queries: QueryBus,
-  ) {}
+  ) { }
 
   @Get()
   async list(@Query('categoryId') categoryId?: string) {
