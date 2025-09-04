@@ -1,37 +1,34 @@
-import {
-  IsInt,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsPositive,
-  IsString,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { createZodDto } from '@anatine/zod-nestjs';
+import { z } from 'zod';
 
-export class CreateProductDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(191)
-  name!: string;
+export const createProductSchema = z.object({
+  name: z
+    .string({ invalid_type_error: 'Name must be a string' } as any)
+    .nonempty('Name is required')
+    .max(191, 'Name cannot exceed 191 characters'),
 
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(191)
-  slug!: string;
+  slug: z
+    .string({ invalid_type_error: 'Slug must be a string' } as any)
+    .nonempty('Slug is required')
+    .max(191, 'Slug cannot exceed 191 characters'),
 
-  @IsString()
-  @IsOptional()
-  description?: string;
+  description: z
+    .string({ invalid_type_error: 'Description must be a string' } as any)
+    .max(191, 'Description cannot exceed 191 characters')
+    .optional(),
 
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @IsPositive()
-  price!: number;
+  price: z
+    .number({ invalid_type_error: 'Price must be a number' } as any)
+    .positive('Price must be positive'),
 
-  @IsInt()
-  @Min(0)
-  stock!: number;
+  stock: z
+    .number({ invalid_type_error: 'Stock must be a number' } as any)
+    .int('Stock must be an integer')
+    .min(0, 'Stock cannot be negative'),
 
-  @IsInt()
-  categoryId!: number;
-}
+  categoryId: z
+    .number({ invalid_type_error: 'Category ID must be a number' } as any)
+    .int('Category ID must be an integer'),
+});
+
+export class CreateProductDto extends createZodDto(createProductSchema) {}

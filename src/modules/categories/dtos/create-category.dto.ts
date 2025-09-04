@@ -1,17 +1,21 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { createZodDto } from '@anatine/zod-nestjs';
+import { z } from 'zod';
 
-export class CreateCategoryDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(191)
-  name!: string;
+export const createCategorySchema = z.object({
+  name: z
+    .string({ invalid_type_error: 'Name must be a string' } as any)
+    .nonempty('Name is required')
+    .max(191, 'Name cannot exceed 191 characters'),
 
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(191)
-  slug!: string;
+  slug: z
+    .string({ invalid_type_error: 'Slug must be a string' } as any)
+    .nonempty('Slug is required')
+    .max(191, 'Slug cannot exceed 191 characters'),
 
-  @IsString()
-  @IsOptional()
-  description?: string;
-}
+  description: z
+    .string({ invalid_type_error: 'Description must be a string' } as any)
+    .max(191, 'Description cannot exceed 191 characters')
+    .optional(),
+});
+
+export class CreateCategoryDto extends createZodDto(createCategorySchema) {}
