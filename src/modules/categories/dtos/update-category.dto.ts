@@ -1,4 +1,6 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateCategoryDto } from './create-category.dto';
+import { createZodDto } from '@anatine/zod-nestjs';
+import { createCategorySchema } from './create-category.dto';
 
-export class UpdateCategoryDto extends PartialType(CreateCategoryDto) {}
+export const updateCategorySchema = createCategorySchema.partial();
+
+export class UpdateCategoryDto extends createZodDto(updateCategorySchema) {}
