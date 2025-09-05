@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CategoriesController } from './categories.controller';
 import { CategoriesRepository } from '../modules/categories/repositories/categories.repository';
+import { CategoriesService } from '../modules/categories/services/categories.service';
 import { CreateCategoryHandler } from '../modules/categories/commands/handlers/create-category.handler';
 import { UpdateCategoryHandler } from '../modules/categories/commands/handlers/update-category.handler';
 import { DeleteCategoryHandler } from '../modules/categories/commands/handlers/delete-category.handler';
@@ -13,7 +14,7 @@ const CommandHandlers = [CreateCategoryHandler, UpdateCategoryHandler, DeleteCat
 @Module({
   imports: [CqrsModule],
   controllers: [CategoriesController],
-  providers: [CategoriesRepository, ...QueryHandlers, ...CommandHandlers],
-  exports: [],
+  providers: [CategoriesService, CategoriesRepository, ...QueryHandlers, ...CommandHandlers],
+  exports: [CategoriesService],
 })
 export class CategoriesModule {}

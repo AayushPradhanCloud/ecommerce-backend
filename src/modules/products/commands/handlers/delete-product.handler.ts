@@ -1,11 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteProductCommand } from '../delete-product.command';
-import { ProductsService } from '../../services/products.service';
+import { ProductsRepository } from '../../repositories/products.repository';
 
 @CommandHandler(DeleteProductCommand)
 export class DeleteProductHandler implements ICommandHandler<DeleteProductCommand> {
-  constructor(private readonly service: ProductsService) {}
-  execute({ id }: DeleteProductCommand) {
-    return this.service.delete(id);
+  constructor(private readonly repository: ProductsRepository) {}
+
+  async execute(command: DeleteProductCommand) {
+    return this.repository.delete(command.id);
   }
 }

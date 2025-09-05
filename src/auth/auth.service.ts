@@ -18,7 +18,9 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  // Validate user credentials (email + password)
+  /**
+   * Validate user credentials (email + password)
+   */
   async validateUser(
     email: string,
     password: string,
@@ -26,52 +28,52 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
     if (!user) return null;
 
-    // Cast user to include password for verification (since TS type User has no password)
     const userWithPassword = user as User & { password: string };
+    const isValid = await argon2.verify(userWithPassword.password, password);
+    if (!isValid) return null;
 
-    const valid = await argon2.verify(userWithPassword.password, password);
-    if (!valid) return null;
-
-    // Remove password before returning
     const { password: _, ...userWithoutPassword } = userWithPassword;
     return userWithoutPassword;
   }
 
-  // Login user and generate access + refresh tokens
-  async login(
-    user: User,
-  ): Promise<{
+  /**
+   * Login user and issue JWT access + refresh tokens
+   */
+  async login(user: User): Promise<{
     accessToken: string;
     refreshToken: string;
     user: Omit<User, 'password'>;
   }> {
     const payload = { sub: user.id, email: user.email, role: user.role };
 
+    // Generate access token
     const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get('JWT_ACCESS_SECRET'),
-      expiresIn: this.configService.get('JWT_ACCESS_EXPIRATION'),
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET') || 'secret',
+      expiresIn:
+        this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '1h',
     });
 
-    // Generate raw refresh token (UUID string)
+    // Generate refresh token (UUID string)
     const refreshTokenRaw = uuidv4();
-
-    // Hash the refresh token before storing
     const refreshTokenHash = await argon2.hash(refreshTokenRaw);
 
-    // Store hashed refresh token linked to the user
+    // Store hashed refresh token in DB
     await this.usersService.storeRefreshToken(user.id, refreshTokenHash);
 
-    // Remove password before returning user
-    const { password: _, ...userWithoutPassword } = user as User & { password?: string };
+    const { password: _, ...userWithoutPassword } = user as User & {
+      password?: string;
+    };
 
     return {
       accessToken,
-      refreshToken: refreshTokenRaw, 
+      refreshToken: refreshTokenRaw,
       user: userWithoutPassword,
     };
   }
 
-  // Refresh tokens using a valid refresh token
+  /**
+   * Refresh tokens using valid refresh token
+   */
   async refreshToken(
     userId: number,
     refreshTokenRaw: string,
@@ -81,84 +83,64 @@ export class AuthService {
     user: Omit<User, 'password'>;
   }> {
     try {
-      // Get all refresh tokens for the user
       const tokens: RefreshToken[] =
         await this.usersService.getRefreshTokens(userId);
 
-      let matchedToken: RefreshToken | null = null;
+      const matchedToken = await this.findMatchingToken(tokens, refreshTokenRaw);
 
-      // Find a token matching the raw refresh token (hashed verification)
-      for (const token of tokens) {
-        if (token.isRevoked) continue;
+      if (!matchedToken) throw new UnauthorizedException('Invalid refresh token');
 
-        const valid = await argon2.verify(token.tokenHash, refreshTokenRaw);
-        if (valid) {
-          matchedToken = token;
-          break;
-        }
-      }
-
-      if (!matchedToken) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      // Find user by ID
       const user = await this.usersService.findById(userId);
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
+      if (!user) throw new UnauthorizedException('User not found');
 
-      // Revoke old refresh token so it cannot be reused
       await this.usersService.revokeRefreshToken(matchedToken.id);
 
-      // Issue new access and refresh tokens
       return this.login(user);
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
-      if (error instanceof Error)
-        throw new InternalServerErrorException(
-          `Token refresh failed: ${error.message}`,
-        );
-      throw new InternalServerErrorException('Unknown token refresh error');
+      throw new InternalServerErrorException(
+        `Token refresh failed: ${error instanceof Error ? error.message : ''}`,
+      );
     }
   }
 
-  // Logout user by deleting the refresh token
+  /**
+   * Logout user (invalidate refresh token)
+   */
   async logout(
     userId: number,
     refreshTokenRaw: string,
   ): Promise<{ message: string }> {
     try {
-      // Get all refresh tokens for the user
       const tokens: RefreshToken[] =
         await this.usersService.getRefreshTokens(userId);
 
-      let matchedToken: RefreshToken | null = null;
+      const matchedToken = await this.findMatchingToken(tokens, refreshTokenRaw);
+      if (!matchedToken) throw new UnauthorizedException('Invalid refresh token');
 
-      // Find matching refresh token by verifying the hash
-      for (const token of tokens) {
-        const valid = await argon2.verify(token.tokenHash, refreshTokenRaw);
-        if (valid) {
-          matchedToken = token;
-          break;
-        }
-      }
-
-      if (!matchedToken) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      // Delete the refresh token (or mark revoked)
       await this.usersService.deleteRefreshTokenByHash(matchedToken.tokenHash);
 
       return { message: 'Logged out successfully' };
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
-      if (error instanceof Error)
-        throw new InternalServerErrorException(
-          `Logout failed: ${error.message}`,
-        );
-      throw new InternalServerErrorException('Unknown logout error');
+      throw new InternalServerErrorException(
+        `Logout failed: ${error instanceof Error ? error.message : ''}`,
+      );
     }
+  }
+
+  /**
+   * Helper: find matching refresh token
+   */
+  private async findMatchingToken(
+    tokens: RefreshToken[],
+    refreshTokenRaw: string,
+  ): Promise<RefreshToken | null> {
+    for (const token of tokens) {
+      if (token.isRevoked) continue;
+      const valid = await argon2.verify(token.tokenHash, refreshTokenRaw);
+      if (valid) return token;
+    }
+    return null;
   }
 }

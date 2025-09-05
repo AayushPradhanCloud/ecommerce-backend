@@ -1,59 +1,82 @@
-import { ProductsService } from '../modules/products/services/products.service';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ProductsService, Product } from '../modules/products/services/products.service';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CreateProductDto } from '../modules/products/dtos/create-product.dto';
+import { UpdateProductDto } from '../modules/products/dtos/update-product.dto';
 
-describe('ProductsService (unit)', () => {
+describe('ProductsService', () => {
   let service: ProductsService;
-  const repo = {
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    isSlugTaken: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+  let commandBus: CommandBus;
+  let queryBus: QueryBus;
+
+  const mockCommandBus = { execute: jest.fn() };
+  const mockQueryBus = { execute: jest.fn() };
+
+  const mockProduct: Product = {
+    id: 1,
+    name: 'Product A',
+    categoryId: 1,
+    slug: 'product-a',
+    price: 100,
+    stock: 50,
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ProductsService,
+        { provide: CommandBus, useValue: mockCommandBus },
+        { provide: QueryBus, useValue: mockQueryBus },
+      ],
+    }).compile();
+
+    service = module.get<ProductsService>(ProductsService);
+    commandBus = module.get<CommandBus>(CommandBus);
+    queryBus = module.get<QueryBus>(QueryBus);
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
-    service = new ProductsService(repo as any);
   });
 
-  it('findAll returns repo result', async () => {
-    repo.findAll.mockResolvedValue([{ id: 1 }]);
-    await expect(service.findAll()).resolves.toEqual([{ id: 1 }]);
+  it('findAll returns result from QueryBus', async () => {
+    mockQueryBus.execute.mockResolvedValue([mockProduct]);
+    await expect(service.findAll()).resolves.toEqual([mockProduct]);
+    expect(mockQueryBus.execute).toHaveBeenCalled();
   });
 
-  it('findById throws if missing', async () => {
-    repo.findById.mockResolvedValue(null);
-    await expect(service.findById(123)).rejects.toThrow('Product not found');
+  it('findOne returns result from QueryBus', async () => {
+    mockQueryBus.execute.mockResolvedValue(mockProduct);
+    await expect(service.findOne(1)).resolves.toEqual(mockProduct);
+    expect(mockQueryBus.execute).toHaveBeenCalledWith(expect.any(Object));
   });
 
-  it('create rejects duplicate slug', async () => {
-    repo.isSlugTaken.mockResolvedValue(true);
-    await expect(
-      service.create({ name: 'A', slug: 'a', price: 9.99, stock: 1, categoryId: 1 }),
-    ).rejects.toThrow('Slug is already taken');
+  it('create returns result from CommandBus', async () => {
+    const dto: CreateProductDto = {
+      name: 'Test',
+      categoryId: 1,
+      slug: 'test',
+      price: 50,
+      stock: 10,
+    };
+    mockCommandBus.execute.mockResolvedValue({ id: 2, ...dto });
+
+    await expect(service.create(dto)).resolves.toEqual({ id: 2, ...dto });
+    expect(mockCommandBus.execute).toHaveBeenCalledWith(expect.any(Object));
   });
 
-  it('create returns created row', async () => {
-    repo.isSlugTaken.mockResolvedValue(false);
-    repo.create.mockResolvedValue({ id: 1 });
-    await expect(
-      service.create({ name: 'A', slug: 'a', price: 9.99, stock: 1, categoryId: 1 }),
-    ).resolves.toEqual({ id: 1 });
+  it('update returns result from CommandBus', async () => {
+    const dto: UpdateProductDto = { name: 'Updated' };
+    mockCommandBus.execute.mockResolvedValue({ ...mockProduct, ...dto });
+
+    await expect(service.update(1, dto)).resolves.toEqual({ ...mockProduct, ...dto });
+    expect(mockCommandBus.execute).toHaveBeenCalledWith(expect.any(Object));
   });
 
-  it('update checks existence and slug', async () => {
-    repo.findById.mockResolvedValue({ id: 1 });
-    repo.isSlugTaken.mockResolvedValue(false);
-    repo.update.mockResolvedValue({ id: 1, name: 'X' });
-    await expect(service.update(1, { name: 'X', slug: 'x' })).resolves.toEqual({
-      id: 1,
-      name: 'X',
-    });
-  });
+  it('remove returns result from CommandBus', async () => {
+    mockCommandBus.execute.mockResolvedValue(mockProduct);
 
-  it('delete checks existence', async () => {
-    repo.findById.mockResolvedValue({ id: 1 });
-    repo.delete.mockResolvedValue({ success: true });
-    await expect(service.delete(1)).resolves.toEqual({ success: true });
+    await expect(service.remove(1)).resolves.toEqual(mockProduct);
+    expect(mockCommandBus.execute).toHaveBeenCalledWith(expect.any(Object));
   });
 });

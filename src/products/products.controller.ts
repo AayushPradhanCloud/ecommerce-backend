@@ -10,55 +10,47 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { RolesGuard } from '../common/guards/roles.guard';
 import { AdminOnly, AdminOrManager } from '../common/decorators/roles.decorators';
-import { CreateProductCommand } from '../modules/products/commands/create-product.command';
-import { UpdateProductCommand } from '../modules/products/commands/update-product.command';
-import { DeleteProductCommand } from '../modules/products/commands/delete-product.command';
-import { CreateProductDto, createProductSchema } from '../modules/products/dtos/create-product.dto';
-import { UpdateProductDto, updateProductSchema } from '../modules/products/dtos/update-product.dto';
-import { GetProductByIdQuery } from '../modules/products/queries/get-product-by-id.query';
-import { GetProductsQuery } from '../modules/products/queries/get-products.query';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { CreateProductDto } from '../modules/products/dtos/create-product.dto';
+import { UpdateProductDto } from '../modules/products/dtos/update-product.dto';
+import { Product, ProductsService } from '../modules/products/services/products.service';
+import { JwtAuthGuard } from 'src/common/guards/auth.guard';
 
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('products')
 export class ProductsController {
-  constructor(
-    private readonly commands: CommandBus,
-    private readonly queries: QueryBus,
-  ) {}
+  constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  async list(@Query('categoryId') categoryId?: string) {
+  async list(@Query('categoryId') categoryId?: string): Promise<Product[]> {
     const cid = categoryId ? Number(categoryId) : undefined;
-    return this.queries.execute(new GetProductsQuery(cid));
+    return this.productsService.findAll(cid);
   }
 
   @Get(':id')
-  async get(@Param('id', ParseIntPipe) id: number) {
-    return this.queries.execute(new GetProductByIdQuery(id));
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Product> {
+    return this.productsService.findOne(id);
   }
 
   @AdminOrManager()
   @Post()
-  async create(@Body(new ZodValidationPipe(createProductSchema)) dto: CreateProductDto) {
-    return this.commands.execute(new CreateProductCommand(dto));
+  async create(@Body() dto: CreateProductDto): Promise<Product> {
+    return this.productsService.create(dto);
   }
 
   @AdminOrManager()
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body(new ZodValidationPipe(updateProductSchema)) dto: UpdateProductDto,
-  ) {
-    return this.commands.execute(new UpdateProductCommand(id, dto));
+    @Body() dto: UpdateProductDto,
+  ): Promise<Product> {
+    return this.productsService.update(id, dto);
   }
 
   @AdminOnly()
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.commands.execute(new DeleteProductCommand(id));
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<Product> {
+    return this.productsService.remove(id);
   }
 }
