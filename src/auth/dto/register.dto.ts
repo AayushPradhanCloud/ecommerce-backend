@@ -1,9 +1,9 @@
 import {
   IsEmail,
-  IsNotEmpty,
-  MinLength,
-  IsOptional,
   IsIn,
+  IsNotEmpty,
+  IsOptional,
+  MinLength,
 } from 'class-validator';
 import { Role } from '../../common/enum/role.enum';
 
