@@ -7,25 +7,29 @@
     "apps/*"
   ],
   "scripts": {
-    "dev:frontend": "pnpm --filter frontend dev",
-    "dev:backend": "pnpm --filter backend start:dev",
-    "dev": "concurrently \"pnpm dev:frontend\" \"pnpm dev:backend\"",
-    "lint": "eslint . --fix",
-    "build": "tsc -b"
+    "dev": "turbo run dev --parallel",
+    "dev:frontend": "turbo run dev:frontend --parallel",
+    "dev:backend": "turbo run dev:backend --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint --parallel",
+    "format": "turbo run format --parallel",
+    "test": "turbo run test --parallel",
+    "clean": "turbo run clean --parallel && rimraf node_modules"
   },
   "dependencies": {
-    "concurrently": "^8.2.0",
     "uuid": "^11.1.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {
-    "typescript": "^5.9.2",
     "eslint": "^9.33.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
     "prettier": "^3.4.2",
     "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0"
+    "tsconfig-paths": "^4.2.0",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2",
+    "rimraf": "^5.0.1"
   },
   "packageManager": "pnpm@10.15.1"
 }

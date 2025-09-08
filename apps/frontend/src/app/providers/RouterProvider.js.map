@@ -1,0 +1,1 @@
+{"version":3,"file":"RouterProvider.js","sourceRoot":"","sources":["RouterProvider.tsx"],"names":[],"mappings":";AAAA,OAAO,EAAE,aAAa,EAAE,MAAM,kBAAkB,CAAA;AAChD,OAAO,EAAE,SAAS,EAAE,MAAM,OAAO,CAAA;AAMjC,MAAM,CAAC,MAAM,cAAc,GAAG,CAAC,EAAE,QAAQ,EAAuB,EAAE,EAAE;IAClE,OAAO,KAAC,aAAa,cAAE,QAAQ,GAAiB,CAAA;AAClD,CAAC,CAAA"}
