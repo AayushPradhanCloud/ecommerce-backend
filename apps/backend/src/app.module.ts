@@ -9,9 +9,10 @@ import { DatabaseService } from './database/service/database.service';
 import { OrdersModule } from './orders/orders.module';
 import { ProductsModule } from './products/products.module';
 import { UsersModule } from './users/users.module';
+import { OpenaiModule } from './openai/openai.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, ProductsModule, CategoriesModule, OrdersModule, LoggerModule, ConfigModule.forRoot({ isGlobal: true }),],
+  imports: [AuthModule, UsersModule, ProductsModule, CategoriesModule, OrdersModule, LoggerModule, OpenaiModule, ConfigModule.forRoot({ isGlobal: true }),],
   controllers: [AppController],
   providers: [AppService, DatabaseService],
 })
