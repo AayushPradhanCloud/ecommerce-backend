@@ -1,23 +1,19 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { DatabaseService } from 'src/database/service/database.service';
 import { orderItems, orders } from '../../../database/schema/orders.schema';
 import { products } from '../../../database/schema/products.schema';
-import { DRIZZLE } from '../../../database/tokens';
 import { CreateOrderDto } from '../dtos/create-order.dto';
 
 @Injectable()
 export class OrdersRepository {
-  constructor(
-    @Inject(DRIZZLE)
-    private readonly db: MySql2Database,
-  ) { }
+  constructor(private readonly dbService: DatabaseService) { }
 
   // Create new order/cart
   async createOrder(userId: number, items: { productId: number; quantity: number; price: string }[]): Promise<number> {
     const totalPrice = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0).toFixed(2);
 
-    const result: any = await this.db
+    const result: any = await this.dbService.db
       .insert(orders)
       .values({ userId, totalPrice, status: 'cart' })
       .execute();
@@ -33,14 +29,14 @@ export class OrdersRepository {
       quantity: item.quantity,
       price: item.price
     }));
-    await this.db.insert(orderItems).values(rows).execute();
+    await this.dbService.db.insert(orderItems).values(rows).execute();
   }
 
 
   // Deduct stock from products
   async deductStock(items: CreateOrderDto['items']): Promise<void> {
     for (const item of items) {
-      const [product] = await this.db
+      const [product] = await this.dbService.db
         .select()
         .from(products)
         .where(eq(products.id, item.productId))
@@ -50,7 +46,7 @@ export class OrdersRepository {
       if (product.stock < item.quantity)
         throw new Error(`Insufficient stock for product ${product.name}`);
 
-      await this.db
+      await this.dbService.db
         .update(products)
         .set({ stock: product.stock - item.quantity })
         .where(eq(products.id, item.productId))
@@ -60,7 +56,7 @@ export class OrdersRepository {
 
   // Get a single order by ID (with items)
   async getOrderById(orderId: number) {
-    const [order] = await this.db
+    const [order] = await this.dbService.db
       .select()
       .from(orders)
       .where(eq(orders.id, orderId))
@@ -68,7 +64,7 @@ export class OrdersRepository {
 
     if (!order) return null;
 
-    const items = await this.db
+    const items = await this.dbService.db
       .select()
       .from(orderItems)
       .where(eq(orderItems.orderId, orderId))
@@ -79,7 +75,7 @@ export class OrdersRepository {
 
   // Get a product by ID
   async getProductById(productId: number) {
-    const [product] = await this.db
+    const [product] = await this.dbService.db
       .select()
       .from(products)
       .where(eq(products.id, productId))
@@ -90,7 +86,7 @@ export class OrdersRepository {
 
   // Get all orders of a user
   async getOrdersByUser(userId: number) {
-    const userOrders = await this.db
+    const userOrders = await this.dbService.db
       .select()
       .from(orders)
       .where(eq(orders.userId, userId))
@@ -103,7 +99,7 @@ export class OrdersRepository {
 
     const ordersWithItems: OrderWithItems[] = [];
     for (const order of userOrders) {
-      const items = await this.db
+      const items = await this.dbService.db
         .select()
         .from(orderItems)
         .where(eq(orderItems.orderId, order.id))

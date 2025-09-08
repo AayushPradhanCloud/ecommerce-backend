@@ -1,20 +1,17 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
+import { DatabaseService } from 'src/database/service/database.service';
 import { categories, type Category } from '../../../database/schema';
-import { DRIZZLE } from '../../../database/tokens';
 import { CreateCategoryDto } from '../dtos/create-category.dto';
 import { UpdateCategoryDto } from '../dtos/update-category.dto';
 
 @Injectable()
 export class CategoriesRepository {
-  constructor(
-    @Inject(DRIZZLE)
-    private readonly db: MySql2Database,
-  ) {}
+  constructor(private readonly dbService: DatabaseService) { }
+
 
   async findAll(): Promise<{ success: true; message: string; categories: Category[] }> {
-    const rows = await this.db.select().from(categories).orderBy(categories.name).execute();
+    const rows = await this.dbService.db.select().from(categories).orderBy(categories.name).execute();
     return {
       success: true,
       message: `${rows.length} categories found`,
@@ -23,7 +20,7 @@ export class CategoriesRepository {
   }
 
   async findById(id: number): Promise<Category | null> {
-    const rows = await this.db
+    const rows = await this.dbService.db
       .select()
       .from(categories)
       .where(eq(categories.id, id))
@@ -41,14 +38,14 @@ export class CategoriesRepository {
       description: dto.description ?? null,
     };
 
-    const result: any = await this.db.insert(categories).values(data).execute();
+    const result: any = await this.dbService.db.insert(categories).values(data).execute();
     const insertId = result.insertId;
 
     let category: Category | null = null;
     if (insertId) {
       category = await this.findById(insertId);
     } else {
-      const rows = await this.db
+      const rows = await this.dbService.db
         .select()
         .from(categories)
         .where(eq(categories.slug, dto.slug))
@@ -77,7 +74,7 @@ export class CategoriesRepository {
     }
 
     try {
-      await this.db.update(categories).set(dto).where(eq(categories.id, id)).execute();
+      await this.dbService.db.update(categories).set(dto).where(eq(categories.id, id)).execute();
 
       const updated = await this.findById(id);
       if (!updated) throw new Error(`Category with ID ${id} not found after update`);
@@ -102,7 +99,7 @@ export class CategoriesRepository {
       throw new Error(`Category with ID ${id} not found`);
     }
 
-    await this.db.delete(categories).where(eq(categories.id, id)).execute();
+    await this.dbService.db.delete(categories).where(eq(categories.id, id)).execute();
 
     return {
       success: true,

@@ -1,9 +1,8 @@
-import { ValidationPipe } from '@nestjs/common';
+import { ZodValidationPipe } from '@anatine/zod-nestjs';
 import { NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { LoggerService } from './common/logger/logger.service';
-import { ZodValidationPipe } from '@anatine/zod-nestjs';
-import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -15,5 +14,6 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000);
+  app.enableShutdownHooks();
 }
 bootstrap();

@@ -1,8 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { and, eq, ne } from 'drizzle-orm';
-import { MySql2Database } from 'drizzle-orm/mysql2';
 import { categories, products, type Category, type Product } from '../../../database/schema';
-import { DRIZZLE } from '../../../database/tokens';
+import { DatabaseService } from '../../../database/service/database.service';
 import { CreateProductDto } from '../dtos/create-product.dto';
 import { UpdateProductDto } from '../dtos/update-product.dto';
 
@@ -14,10 +13,11 @@ interface MySqlResult {
 
 @Injectable()
 export class ProductsRepository {
-  constructor(
-    @Inject(DRIZZLE)
-    private readonly db: MySql2Database,
-  ) {}
+  constructor(private readonly dbService: DatabaseService) { }
+
+  private get db() {
+    return this.dbService.db;
+  }
 
   async findAll(categoryId?: number): Promise<(Product & { category?: Category })[]> {
     if (categoryId) {
@@ -74,7 +74,7 @@ export class ProductsRepository {
     const [insertedIdRow] = await this.db
       .insert(products)
       .values(productData)
-      .$returningId() 
+      .$returningId()
       .execute();
 
     if (!insertedIdRow) {
