@@ -64,3 +64,29 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Turborepo cache
 .turbo/
+
+
+# Logs
+*.log
+
+# Vite cache
+.vite/
+node_modules/.vite/
+node_modules/.vite-temp/
+
+# Turbo cache
+.turbo/
+
+# Build output
+dist/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Maps (optional, can be regenerated)
+*.js.map
+*.d.ts.map
+
+# OS files
+.DS_Store
+Thumbs.db
