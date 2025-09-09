@@ -1,4 +1,4 @@
-CREATE TABLE `categories` (
+CREATE TABLE IF NOT EXISTS `categories` (
 	`id` serial AUTO_INCREMENT NOT NULL,
 	`name` varchar(191) NOT NULL,
 	`slug` varchar(191) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE `categories` (
 	CONSTRAINT `categories_slug_unique` UNIQUE(`slug`)
 );
 --> statement-breakpoint
-CREATE TABLE `products` (
+CREATE TABLE IF NOT EXISTS `products` (
 	`id` serial AUTO_INCREMENT NOT NULL,
 	`name` varchar(191) NOT NULL,
 	`slug` varchar(191) NOT NULL,

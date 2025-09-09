@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { DatabaseModule } from '../database/database.module';
 import { CreateProductHandler } from '../modules/products/commands/handlers/create-product.handler';
 import { DeleteProductHandler } from '../modules/products/commands/handlers/delete-product.handler';
 import { UpdateProductHandler } from '../modules/products/commands/handlers/update-product.handler';
@@ -15,7 +14,7 @@ const CommandHandlers = [CreateProductHandler, UpdateProductHandler, DeleteProdu
 const QueryHandlers = [GetProductsHandler, GetProductByIdHandler];
 
 @Module({
-  imports: [CqrsModule, DatabaseModule],
+  imports: [CqrsModule],
   controllers: [ProductsController],
   providers: [
     ProductsService,
@@ -24,4 +23,4 @@ const QueryHandlers = [GetProductsHandler, GetProductByIdHandler];
     ...QueryHandlers,
   ],
 })
-export class ProductsModule {}
+export class ProductsModule { }

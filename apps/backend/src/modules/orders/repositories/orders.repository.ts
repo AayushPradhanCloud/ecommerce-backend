@@ -14,8 +14,13 @@ export class OrdersRepository {
   ) { }
 
   // Create new order/cart
-  async createOrder(userId: number, items: { productId: number; quantity: number; price: string }[]): Promise<number> {
-    const totalPrice = items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0).toFixed(2);
+  async createOrder(
+    userId: number,
+    items: { productId: number; quantity: number; price: string }[],
+  ): Promise<number> {
+    const totalPrice = items
+      .reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0)
+      .toFixed(2);
 
     const result: any = await this.db
       .insert(orders)
@@ -26,16 +31,19 @@ export class OrdersRepository {
   }
 
   // Add items to order
-  async addItems(orderId: number, items: { productId: number; quantity: number; price: string }[]) {
-    const rows = items.map(item => ({
+  async addItems(
+    orderId: number,
+    items: { productId: number; quantity: number; price: string }[],
+  ) {
+    const rows = items.map((item) => ({
       orderId,
       productId: item.productId,
       quantity: item.quantity,
-      price: item.price
+      price: item.price,
     }));
+
     await this.db.insert(orderItems).values(rows).execute();
   }
-
 
   // Deduct stock from products
   async deductStock(items: CreateOrderDto['items']): Promise<void> {
@@ -84,9 +92,9 @@ export class OrdersRepository {
       .from(products)
       .where(eq(products.id, productId))
       .execute();
+
     return product || null;
   }
-
 
   // Get all orders of a user
   async getOrdersByUser(userId: number) {

@@ -1,12 +1,12 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { OpenaiService } from './openai.service';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateCompletionDto } from '../modules/openai/dtos/create-completion.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { OpenaiService } from './openai.service';
 
 @ApiTags('OpenAI')
 @Controller('openai')
 export class OpenaiController {
-  constructor(private readonly openaiService: OpenaiService) {}
+  constructor(private readonly openaiService: OpenaiService) { }
 
   @Post('completion')
   @ApiOperation({ summary: 'Generate text completion using OpenAI' })

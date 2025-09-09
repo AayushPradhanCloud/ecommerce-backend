@@ -1,4 +1,4 @@
-CREATE TABLE `order_items` (
+CREATE TABLE IF NOT EXISTS `order_items` (
 	`id` serial AUTO_INCREMENT NOT NULL,
 	`order_id` int NOT NULL,
 	`product_id` int NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE `order_items` (
 	CONSTRAINT `order_items_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `orders` (
+CREATE TABLE IF NOT EXISTS `orders` (
 	`id` serial AUTO_INCREMENT NOT NULL,
 	`user_id` int NOT NULL,
 	`total_price` decimal(10,2) NOT NULL DEFAULT '0.00',

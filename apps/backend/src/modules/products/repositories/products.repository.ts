@@ -1,7 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, ne } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
-import { categories, products, type Category, type Product } from '../../../database/schema';
+import {
+  categories,
+  products,
+  type Category,
+  type Product,
+} from '../../../database/schema';
 import { DRIZZLE } from '../../../database/tokens';
 import { CreateProductDto } from '../dtos/create-product.dto';
 import { UpdateProductDto } from '../dtos/update-product.dto';
@@ -17,7 +22,7 @@ export class ProductsRepository {
   constructor(
     @Inject(DRIZZLE)
     private readonly db: MySql2Database,
-  ) {}
+  ) { }
 
   async findAll(categoryId?: number): Promise<(Product & { category?: Category })[]> {
     if (categoryId) {
@@ -60,7 +65,12 @@ export class ProductsRepository {
       ? and(eq(products.slug, slug), ne(products.id, excludeId))
       : eq(products.slug, slug);
 
-    const rows = await this.db.select().from(products).where(condition).limit(1).execute();
+    const rows = await this.db
+      .select()
+      .from(products)
+      .where(condition)
+      .limit(1)
+      .execute();
 
     return rows.length > 0;
   }
@@ -74,7 +84,7 @@ export class ProductsRepository {
     const [insertedIdRow] = await this.db
       .insert(products)
       .values(productData)
-      .$returningId() 
+      .$returningId()
       .execute();
 
     if (!insertedIdRow) {

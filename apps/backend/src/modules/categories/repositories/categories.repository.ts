@@ -11,10 +11,15 @@ export class CategoriesRepository {
   constructor(
     @Inject(DRIZZLE)
     private readonly db: MySql2Database,
-  ) {}
+  ) { }
 
   async findAll(): Promise<{ success: true; message: string; categories: Category[] }> {
-    const rows = await this.db.select().from(categories).orderBy(categories.name).execute();
+    const rows = await this.db
+      .select()
+      .from(categories)
+      .orderBy(categories.name)
+      .execute();
+
     return {
       success: true,
       message: `${rows.length} categories found`,
@@ -29,6 +34,7 @@ export class CategoriesRepository {
       .where(eq(categories.id, id))
       .limit(1)
       .execute();
+
     return rows[0] ?? null;
   }
 
@@ -41,22 +47,17 @@ export class CategoriesRepository {
       description: dto.description ?? null,
     };
 
-    const result: any = await this.db.insert(categories).values(data).execute();
-    const insertId = result.insertId;
+    const [insertedIdRow] = await this.db
+      .insert(categories)
+      .values(data)
+      .$returningId()
+      .execute();
 
-    let category: Category | null = null;
-    if (insertId) {
-      category = await this.findById(insertId);
-    } else {
-      const rows = await this.db
-        .select()
-        .from(categories)
-        .where(eq(categories.slug, dto.slug))
-        .limit(1)
-        .execute();
-      category = rows[0] ?? null;
+    if (!insertedIdRow) {
+      throw new Error('Failed to create category');
     }
 
+    const category = await this.findById(insertedIdRow.id);
     if (!category) throw new Error('Failed to fetch created category');
 
     return {
@@ -66,7 +67,6 @@ export class CategoriesRepository {
     };
   }
 
-  // Update existing category
   async update(
     id: number,
     dto: UpdateCategoryDto,
@@ -76,26 +76,18 @@ export class CategoriesRepository {
       throw new Error(`Category with ID ${id} not found`);
     }
 
-    try {
-      await this.db.update(categories).set(dto).where(eq(categories.id, id)).execute();
+    await this.db.update(categories).set(dto).where(eq(categories.id, id)).execute();
 
-      const updated = await this.findById(id);
-      if (!updated) throw new Error(`Category with ID ${id} not found after update`);
+    const updated = await this.findById(id);
+    if (!updated) throw new Error(`Category with ID ${id} not found after update`);
 
-      return {
-        success: true,
-        message: 'Category successfully updated',
-        category: updated,
-      };
-    } catch (err: any) {
-      if (err.code === 'ER_DUP_ENTRY') {
-        throw new Error(`Category with slug "${dto.slug}" already exists`);
-      }
-      throw err;
-    }
+    return {
+      success: true,
+      message: 'Category successfully updated',
+      category: updated,
+    };
   }
 
-  // Delete a category
   async delete(id: number): Promise<{ success: true; message: string; deleted: Category }> {
     const existing = await this.findById(id);
     if (!existing) {
