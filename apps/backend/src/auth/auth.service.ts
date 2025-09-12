@@ -1,14 +1,14 @@
 import {
   Injectable,
-  UnauthorizedException,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { v4 as uuidv4 } from 'uuid';
+import { RefreshToken, User } from '../database/schema/users.schema';
 import { UsersService } from '../users/users.service';
-import { User, RefreshToken } from '../database/schema/users.schema';
 
 @Injectable()
 export class AuthService {
@@ -16,7 +16,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   /**
    * Validate user credentials (email + password)

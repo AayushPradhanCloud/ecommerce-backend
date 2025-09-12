@@ -1,5 +1,5 @@
-import { mysqlTable, serial, varchar, int, decimal, text } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
+import { decimal, int, mysqlTable, serial, text, varchar } from 'drizzle-orm/mysql-core';
 import { categories } from './categories.schema';
 
 export const products = mysqlTable('products', {

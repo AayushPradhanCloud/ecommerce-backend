@@ -10,17 +10,17 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/common/guards/auth.guard';
 import { AdminOnly, AdminOrManager } from '../common/decorators/roles.decorators';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { CreateProductDto } from '../modules/products/dtos/create-product.dto';
 import { UpdateProductDto } from '../modules/products/dtos/update-product.dto';
 import { Product, ProductsService } from '../modules/products/services/products.service';
-import { JwtAuthGuard } from 'src/common/guards/auth.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
 
   @Get()
   async list(@Query('categoryId') categoryId?: string): Promise<Product[]> {
