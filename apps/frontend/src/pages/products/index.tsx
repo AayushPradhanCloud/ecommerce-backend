@@ -1,39 +1,29 @@
 import { useProducts } from "../../entities/product/hooks";
-
+import { useAuthStore } from "../../shared/store/auth";
 
 export default function ProductsPage() {
+  const { user } = useAuthStore();
   const { data, isLoading, isError } = useProducts();
 
-  if (isLoading) {
-    return <p className="text-gray-600">Loading products...</p>;
-  }
+  console.log("data:", data);
 
-  if (isError) {
-    return <p className="text-red-500">Failed to load products.</p>;
-  }
+  // if (!user) return <Navigate to="/login" replace />;
+
+  if (isLoading) return <p>Loading...</p>;
+  if (isError) return <p>Error loading products</p>;
 
   return (
-    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-      {data?.map((product) => (
-        <div
-          key={product.id}
-          className="border rounded-lg p-4 shadow hover:shadow-lg transition"
-        >
-          <h2 className="text-lg font-semibold">{product.name}</h2>
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {product.description}
-          </p>
-          <p className="text-gray-800 font-medium mt-2">
-            ${product.price}
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Stock: {product.stock}
-          </p>
-          <p className="text-xs text-gray-400 mt-2">
-            Category: {product.categoryId ?? "Uncategorized"}
-          </p>
-        </div>
-      ))}
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">Products</h1>
+      <ul className="grid grid-cols-3 gap-4">
+        {data?.map((p) => (
+          <li key={p.id} className="border rounded p-4">
+            <h2 className="font-semibold">{p.name}</h2>
+            <p>${p.price}</p>
+            <p className="text-sm text-gray-600">{p.description}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

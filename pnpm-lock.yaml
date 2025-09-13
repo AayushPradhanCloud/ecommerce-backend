@@ -217,6 +217,9 @@ importers:
       casdoor-js-sdk:
         specifier: ^0.16.0
         version: 0.16.0
+      dotenv:
+        specifier: ^17.2.2
+        version: 17.2.2
       react:
         specifier: ^19.1.1
         version: 19.1.1
