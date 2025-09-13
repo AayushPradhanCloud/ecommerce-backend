@@ -13,6 +13,11 @@ async function bootstrap() {
   app.useLogger(app.get(LoggerService));
   app.setGlobalPrefix('api');
 
+  app.enableCors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  });
+
   patchNestjsSwagger();
 
   const config = new DocumentBuilder()

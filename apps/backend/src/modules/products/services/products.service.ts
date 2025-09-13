@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { CreateProductCommand } from '../commands/create-product.command';
-import { UpdateProductCommand } from '../commands/update-product.command';
 import { DeleteProductCommand } from '../commands/delete-product.command';
-import { GetProductsQuery } from '../queries/get-products.query';
-import { GetProductByIdQuery } from '../queries/get-product-by-id.query';
+import { UpdateProductCommand } from '../commands/update-product.command';
 import { CreateProductDto } from '../dtos/create-product.dto';
 import { UpdateProductDto } from '../dtos/update-product.dto';
+import { GetProductByIdQuery } from '../queries/get-product-by-id.query';
+import { GetProductsQuery } from '../queries/get-products.query';
 
 export type Product = {
   id: number;
@@ -20,7 +20,7 @@ export type Product = {
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly commands: CommandBus, private readonly queries: QueryBus) {}
+  constructor(private readonly commands: CommandBus, private readonly queries: QueryBus) { }
 
   async findAll(categoryId?: number): Promise<Product[]> {
     return this.queries.execute(new GetProductsQuery(categoryId));

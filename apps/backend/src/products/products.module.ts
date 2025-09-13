@@ -24,4 +24,4 @@ const QueryHandlers = [GetProductsHandler, GetProductByIdHandler];
     ...QueryHandlers,
   ],
 })
-export class ProductsModule {}
+export class ProductsModule { }
