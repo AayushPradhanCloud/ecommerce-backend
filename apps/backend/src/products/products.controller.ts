@@ -10,13 +10,14 @@ import {
   Query,
   UseGuards
 } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AdminOnly, AdminOrManager } from '../common/decorators/roles.decorators';
 import { CreateProductDto } from '../modules/products/dtos/create-product.dto';
 import { UpdateProductDto } from '../modules/products/dtos/update-product.dto';
 import { Product, ProductsService } from '../modules/products/services/products.service';
 
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) { }
