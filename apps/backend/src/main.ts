@@ -13,6 +13,12 @@ async function bootstrap() {
   app.useLogger(app.get(LoggerService));
   app.setGlobalPrefix('api');
 
+  app.enableCors({
+    origin: 'http://localhost:5173', 
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, 
+  });
+
   patchNestjsSwagger();
 
   const config = new DocumentBuilder()
@@ -34,3 +40,4 @@ async function bootstrap() {
 }
 
 bootstrap();
+

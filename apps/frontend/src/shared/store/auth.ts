@@ -1,31 +1,72 @@
 import { create } from "zustand";
 
-type User = {
-    id: number;
-    email: string;
-    role: string;
+export type User = { 
+  id: string; 
+  name?: string;
+  email: string;
+  role?: string;
+  [key: string]: unknown; 
 };
 
-type AuthState = {
-    user: User | null;
-    accessToken: string | null;
-    refreshToken: string | null;
-    login: (user: User, accessToken: string, refreshToken: string) => void;
-    logout: () => void;
-    setTokens: (access: string, refresh: string, user: User) => void;
+export type AuthState = {
+  user: User | null;
+  accessToken: string | null;
+  refreshToken?: string;
+  login: (user: User, accessToken: string, refreshToken?: string) => void;
+  logout: () => void;
+  setTokens: (accessToken: string, refreshToken?: string, user?: User) => void;
 };
 
-export const useAuthStore = create<AuthState>((set) => ({
-    user: null,
-    accessToken: null,
-    refreshToken: null,
+const LOCAL_STORAGE_KEY = "auth_state";
 
-    login: (user, accessToken, refreshToken) =>
-        set({ user, accessToken, refreshToken }),
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  accessToken: null,
+  refreshToken: undefined,
 
-    logout: () =>
-        set({ user: null, accessToken: null, refreshToken: null }),
+  login: (user, accessToken, refreshToken) => {
+    const newState = { user, accessToken, refreshToken };
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newState));
+    } catch (err) {
+      console.error("Failed to save auth state:", err);
+    }
+    set(newState);
+  },
 
-    setTokens: (access, refresh, user) =>
-        set({ accessToken: access, refreshToken: refresh, user }),
+  logout: () => {
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch (err) {
+      console.error("Failed to remove auth state:", err);
+    }
+    set({ user: null, accessToken: null, refreshToken: undefined });
+  },
+
+  setTokens: (accessToken, refreshToken, user) => {
+    const currentUser = user ?? get().user;
+    const newState = { user: currentUser, accessToken, refreshToken };
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newState));
+    } catch (err) {
+      console.error("Failed to save auth state:", err);
+    }
+    set(newState);
+  },
 }));
+
+(() => {
+  try {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      useAuthStore.setState({
+        user: parsed.user ?? null,
+        accessToken: parsed.accessToken ?? null,
+        refreshToken: parsed.refreshToken, 
+      });
+    }
+  } catch (err) {
+    console.warn("Failed to parse auth state from localStorage:", err);
+  }
+})();

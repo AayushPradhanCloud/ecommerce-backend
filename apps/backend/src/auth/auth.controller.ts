@@ -1,79 +1,84 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-  UnauthorizedException,
-} from '@nestjs/common';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { UsersService } from '../users/users.service';
+import { Body, Controller, Get, Post, Query, Res, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { LogoutDto } from './dto/logout.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { RegisterDto } from './dto/register.dto';
+import { CasdoorService } from './casdoor.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly usersService: UsersService,
-  ) { }
+    private readonly casdoorService: CasdoorService,
+    private readonly configService: ConfigService,
+  ) {}
 
-  @Post('register')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User registered successfully' })
-  @ApiResponse({ status: 400, description: 'Validation error' })
-  async register(@Body() dto: RegisterDto): Promise<{ user: any }> {
-    const user = await this.usersService.create(
-      dto.email,
-      dto.password,
-      dto.role,
-    );
-    return { user };
+  @Get('login')
+  @ApiOperation({ summary: 'Redirect to Casdoor login page' })
+  @ApiResponse({ status: 302, description: 'Redirect to Casdoor' })
+  async login(@Res() res: Response) {
+    const redirectUri = this.configService.get<string>('CASDOOR_REDIRECT_URI')!;
+    const url = this.casdoorService.getLoginUrl(redirectUri);
+    return res.redirect(url);
   }
 
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'User login and get tokens' })
-  @ApiResponse({
-    status: 200,
-    description: 'Login successful, returns tokens and user info',
-  })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(
-    @Body() dto: LoginDto,
-  ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
-    const user = await this.authService.validateUser(dto.email, dto.password);
-    if (!user) throw new UnauthorizedException('Invalid credentials');
-    return this.authService.login(user);
+  @Get('callback')
+  @ApiOperation({ summary: 'Handle Casdoor OAuth callback' })
+  @ApiResponse({ status: 302, description: 'Redirect to frontend with cookies' })
+  async callback(@Query('code') code: string, @Res() res: Response) {
+    if (!code) {
+      throw new UnauthorizedException('Missing authorization code');
+    }
+
+    const { token, refreshToken } = await this.authService.loginWithCasdoorCode(code);
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: 1000 * 60 * 60,
+    };
+
+    const refreshCookieOptions = {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    };
+
+    res.cookie('accessToken', token, cookieOptions);
+    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
+
+    return res.redirect(frontendUrl);
   }
 
   @Post('refresh')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refresh access token' })
-  @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
-  @ApiResponse({ status: 401, description: 'Invalid refresh token' })
-  @ApiBody({ type: RefreshTokenDto })
-  async refresh(@Body() dto: RefreshTokenDto): Promise<{ accessToken: string; refreshToken: string; user: any }> {
-    return this.authService.refreshToken(dto.userId, dto.refreshToken);
-  }
+  @ApiOperation({ summary: 'Refresh JWT access token' })
+  @ApiResponse({ status: 200, description: 'Return new access token in cookie' })
+  async refresh(@Body('refreshToken') refreshToken: string, @Res() res: Response) {
+    if (!refreshToken) throw new UnauthorizedException('Missing refresh token');
 
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Logout user and invalidate refresh token' })
-  @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid logout request' })
-  @ApiBody({ type: LogoutDto })
-  async logout(@Body() dto: LogoutDto): Promise<{ message: string }> {
-    return this.authService.logout(dto.userId, dto.refreshToken);
+    const { token: newAccessToken, refreshToken: newRefreshToken } =
+      await this.authService.refreshToken(refreshToken);
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: 1000 * 60 * 60,
+    };
+
+    const refreshCookieOptions = {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    };
+
+    res.cookie('accessToken', newAccessToken, cookieOptions);
+    res.cookie('refreshToken', newRefreshToken, refreshCookieOptions);
+
+    return res.json({ message: 'Token refreshed' });
   }
 }
