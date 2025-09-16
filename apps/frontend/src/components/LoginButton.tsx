@@ -1,10 +1,13 @@
-import React from 'react';
-
-const CASDOOR_LOGIN_URL = import.meta.env.VITE_BACKEND_URL + '/auth/login';
+import * as casdoorApi from "@/api/casdoor";
 
 const LoginButton = () => {
-  const handleLogin = () => {
-    window.location.href = CASDOOR_LOGIN_URL;
+  const handleLogin = async () => {
+    try {
+      const url = await casdoorApi.getLoginUrl();
+      window.location.href = url;
+    } catch (err) {
+      console.error("Failed to start Casdoor login:", err);
+    }
   };
 
   return (

@@ -7,10 +7,9 @@ export interface CasdoorAuthResponse {
   user: User;
 }
 
-
 export const getLoginUrl = async (): Promise<string> => {
   try {
-    const response = await client.get("api/auth/login", {
+    const response = await client.get("/api/auth/login", {
       maxRedirects: 0,
       validateStatus: (status) => status === 302 || status === 200,
     });
@@ -26,13 +25,12 @@ export const getLoginUrl = async (): Promise<string> => {
   }
 };
 
-
 export const exchangeCodeForToken = async (
   code: string
 ): Promise<CasdoorAuthResponse> => {
   try {
     const response = await client.get<CasdoorAuthResponse>(
-      `/auth/callback?code=${encodeURIComponent(code)}`
+      `/api/auth/callback?code=${encodeURIComponent(code)}`
     );
 
     return response.data;

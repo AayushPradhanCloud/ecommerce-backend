@@ -21,6 +21,7 @@ export default function LoginPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),
+          credentials: "include",
         }
       );
 
@@ -28,7 +29,7 @@ export default function LoginPage() {
 
       const data = await response.json();
       login(data.user, data.accessToken, data.refreshToken);
-      navigate("/"); 
+      navigate("/", { replace: true });
     } catch (err) {
       console.error(err);
       alert("Login failed. Check your credentials.");
@@ -40,7 +41,7 @@ export default function LoginPage() {
   const handleCasdoorLogin = async () => {
     try {
       const url = await casdoorApi.getLoginUrl();
-      window.location.href = url; 
+      window.location.href = url; // redirect to Casdoor
     } catch (err) {
       console.error(err);
       alert("Casdoor login failed");
