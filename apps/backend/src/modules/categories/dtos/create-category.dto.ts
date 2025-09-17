@@ -18,4 +18,4 @@ export const createCategorySchema = z.object({
     .optional(),
 });
 
-export class CreateCategoryDto extends createZodDto(createCategorySchema) {}
+export class CreateCategoryDto extends createZodDto(createCategorySchema) { }

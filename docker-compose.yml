@@ -1,0 +1,55 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ecommerce-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ecommerce_db
+      MYSQL_USER: nest_user
+      MYSQL_PASSWORD: nestpass123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./conf/mysql-init:/docker-entrypoint-initdb.d # auto-create casdoor DB
+  casdoor:
+    image: casbin/casdoor:latest
+    container_name: casdoor
+    restart: always
+    depends_on:
+      - mysql
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./conf/app.conf:/conf/app.conf
+    environment:
+      - RUNNING_IN_DOCKER=true
+      - TZ=Asia/Kathmandu
+    command: >
+      sh -c "until nc -z mysql 3306; do echo 'Waiting for MySQL...'; sleep 2; done &&
+        ./casdoor"
+  backend:
+    build: ./apps/backend
+    container_name: nest-backend
+    restart: always
+    depends_on:
+      - mysql
+      - casdoor
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+  frontend:
+    build: ./apps/frontend
+    container_name: react-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./apps/frontend/.env
+
+volumes:
+  mysql_data:
