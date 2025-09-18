@@ -12,9 +12,11 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./conf/mysql-init:/docker-entrypoint-initdb.d # auto-create casdoor DB
+      - ./conf/mysql-init:/docker-entrypoint-initdb.d
   casdoor:
-    image: casbin/casdoor:latest
+    build:
+      context: ./conf/casdoor
+      dockerfile: Dockerfile
     container_name: casdoor
     restart: always
     depends_on:
